@@ -39,6 +39,10 @@ class InternalReorder(models.Model):
     product_id = fields.Many2one(
             'product.product', 'Product',
             domain=[('type', '=', 'product')], ondelete='cascade', required=True)
+    product_tmpl_id = fields.Many2one(
+            'product.template', 'Product Template',
+            related='product_id.product_tmpl_id',
+            help="Technical: used in views")
     product_uom = fields.Many2one(
             'product.uom', 'Product Unit of Measure', related='product_id.uom_id',
             readonly=True, required=True,
@@ -104,6 +108,9 @@ class InternalReorder(models.Model):
                 'name': 'Internal Reorder' + self.name,
                 # 'company_id': self.company_id.id,
                 'product_id': self.product_id.id,
+                'stock_in_store': self.product_tmpl_id.stock_in_store,
+                'stock_in_warehouse': self.product_tmpl_id.stock_in_warehouse,
+                'stock_in_canvas_car': self.product_tmpl_id.stock_in_canvas_car,
                 'product_uom_qty': self.product_max_qty,
                 'product_uom': self.product_uom.id,
                 'location_id': self.location_id.id,
@@ -136,7 +143,7 @@ class InternalReorder(models.Model):
 
                     if stock:
                         if stock.min_date:
-                            if (t.strftime("%Y-%m-%d") in stock.min_date):
+                            if (t.strftime("%Y-%m-%d") in stock.min_date) and len(stock.move_lines) < 80:
                                 stock_picking = stock
                             else:
                                 stock_picking = StockPickingSudo.create(stock_picking_value)
